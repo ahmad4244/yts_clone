@@ -8,25 +8,7 @@ const API = axios.create({
     },  
 });
 
-
-// Get Movies
-// {{base_url}}/api/movies
-
-// Get Movies With Filters
-// {{base_url}}/api/movies?year=1995
-
-// Get Movies With Pagination and Sorting
-// {{base_url}}/api/movies?genre=Action&page=10&limit=25&sort=rating&order=desc
-
-// Get Movies By Search
-// {{base_url}}/api/search?movieSearch=batman
-
-// Get Movies By Search with Pagination
-// {{base_url}}/api/search?movieSearch=chaplin&page=1&limit=25
-
-// Get Movies With Additional Filters
-// {{base_url}}/api/movies?quality=1080p&mpaRating=PG-13
-export const getMovies = async (params:any) => {
+export const getMovies = async (params:unknown) => {
   try {
     const response = await API.get('/movies', { params });
     return response.data;
@@ -37,7 +19,7 @@ export const getMovies = async (params:any) => {
 };
 
 // Search Movies
-export const searchMovies = async (query: string, params:any = {}) => {
+export const searchMovies = async (query: string, params: Record<string, unknown> = {}) => {
   try {
     const response = await API.get('/search', {
       params: { movieSearch: query, ...params },

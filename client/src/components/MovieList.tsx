@@ -1,166 +1,69 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
 import MovieCard from "./MovieCard";
-import { getMovies } from "../services/api";
-
+import { useMovieFilters } from "../hooks";
+import { GENRE_OPTIONS, LANGUAGE_OPTIONS, QUALITY_OPTIONS, SORT_BUTTONS } from "../utils";
 
 const MovieList = () => {
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    genre: "",
-    rating: "",
-    year: "",
-    language: "",
-    search: "",
-    sortBy: "title",
-    order: "asc",
-    page: 1,
-    limit: 50,
-    quality: "",
-    mpaRating: "",
-  });
-  const [pagination, setPagination] = useState({});
+const { movies, filters, pagination,loading, handleInputChange,
+    handleSort,
+    handlePageChange,
+    resetFilters,
+} = useMovieFilters();
 
-  const fetchMovies = async () => {
-    setLoading(true);
-    try {
-      const res = await getMovies({})
-      setMovies(res.data);
-      setPagination(res.pagination);
-    } catch (err) {
-      console.error("Error fetching movies:", err);
-      alert("Something went wrong while fetching movies.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const renderInput = (name: string, placeholder: string, type = 'text') => (
+    <input
+      type={type}
+      name={name}
+      placeholder={placeholder}
+      value={filters[name as keyof typeof filters]}
+      onChange={handleInputChange}
+      className="border p-2"
+    />
+  );
 
-  useEffect(() => {
-    fetchMovies();
-  }, [filters]);
+  const renderSelect = (name: string, options: Array<{value: string, label: string}>) => (
+    <select
+      name={name}
+      value={filters[name as keyof typeof filters]}
+      onChange={handleInputChange}
+      className="border p-2"
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+const renderSortButton = ({ key, label, color }: {key: string, label: string, color: string}) => (
+    <button
+     key={key}
+      onClick={() => handleSort(key)}
+      // className={`mr-2 px-4 py-2 bg-${color}-500 text-white rounded`}
+      className="mr-2 px-4 py-2 bg-blue-500 text-white rounded"
+    >
+      Sort by {label} ({filters.order})
+    </button>
+  );
 
-  const debouncedSearch = (name, value) => {
-    setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "search") {
-      debouncedSearch(name, value);
-    } else {
-      setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
-    }
-  };
-
-  const handleSort = (sortBy) => {
-    setFilters((prev) => ({
-      ...prev,
-      sortBy,
-      order: prev.order === "asc" ? "desc" : "asc",
-    }));
-  };
-
-  const handlePageChange = (direction:any) => {
-    setFilters((prev) => ({
-      ...prev,
-      page: direction === "next" ? prev.page + 1 : Math.max(prev.page - 1, 1),
-    }));
-  };
-
-  const resetFilters = () => {
-    setFilters({
-      genre: "",
-      rating: "",
-      year: "",
-      language: "",
-      search: "",
-      sortBy: "title",
-      order: "asc",
-      page: 1,
-      limit: 25,
-      quality: "",
-      mpaRating: "",
-    });
-  };
 
   return (
     <div className="p-4 max-w-5xl mx-auto">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <input
-          type="text"
-          name="search"
-          placeholder="Search Movies"
-          value={filters.search}
-          onChange={handleInputChange}
-          className="border p-2"
-        />
-        <select
-          name="genre"
-          value={filters.genre}
-          onChange={handleInputChange}
-          className="border p-2"
-        >
-          <option value="">All Genres</option>
-          <option value="Action">Action</option>
-          <option value="Drama">Drama</option>
-          <option value="Comedy">Comedy</option>
-        </select>
-        <input
-          type="number"
-          name="rating"
-          placeholder="Minimum Rating"
-          value={filters.rating}
-          onChange={handleInputChange}
-          className="border p-2"
-        />
-        <input
-          type="number"
-          name="year"
-          placeholder="Year"
-          value={filters.year}
-          onChange={handleInputChange}
-          className="border p-2"
-        />
-        <select
-          name="language"
-          value={filters.language}
-          onChange={handleInputChange}
-          className="border p-2"
-        >
-          <option value="">All Languages</option>
-          <option value="English">English</option>
-          <option value="Hindi">Hindi</option>
-          <option value="Spanish">Spanish</option>
-        </select>
-        <select
-          name="quality"
-          value={filters.quality}
-          onChange={handleInputChange}
-          className="border p-2"
-        >
-          <option value="">Quality</option>
-          <option value="720p">&lt; 720p</option>
-          <option value="1080p">1080p</option>
-        </select>
-        <input
-          type="number"
-          name="mpaRating"
-          placeholder="mpaRating"
-          value={filters.mpaRating}
-          onChange={handleInputChange}
-          className="border p-2"
-        />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        {renderInput('search', 'Search Movies')}
+        {renderSelect('genre', GENRE_OPTIONS)}
+        {renderInput('rating', 'Rating', 'number')}
+        {renderInput('mpaRating', 'MPA Rating')}
+        {renderInput('year', 'Year', 'number')}
+        {renderSelect('language', LANGUAGE_OPTIONS)}
+        {renderSelect('quality', QUALITY_OPTIONS)}
       </div>
 
       <div className="mb-4">
-        <button onClick={() => handleSort("title")} className="mr-2 px-4 py-2 bg-blue-500 text-white rounded">
-          Sort by Title ({filters.order})
-        </button>
-        <button onClick={() => handleSort("year")} className="px-4 py-2 bg-green-500 text-white rounded">
-          Sort by Year ({filters.order})
-        </button>
-        <button onClick={resetFilters} className="ml-2 px-4 py-2 bg-red-500 text-white rounded">
+        {SORT_BUTTONS.map(renderSortButton)}
+        <button
+          onClick={resetFilters}
+          className="ml-2 px-4 py-2 bg-red-500 text-white rounded"
+        >
           Reset Filters
         </button>
       </div>
@@ -171,9 +74,9 @@ const MovieList = () => {
         <p>No movies found matching the criteria.</p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {movies.map((movie) => (
-                  <MovieCard movie={movie}/>
-                ))}
+          {movies.map((movie) => (
+            <MovieCard movie={movie} />
+          ))}
         </div>
       )}
 
